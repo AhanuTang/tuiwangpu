@@ -32,7 +32,6 @@ public class ParseHtml {
 			System.out.println(giveMoney);
 			System.out.println(taskId);
 			System.out.println("----------");
-
 		}
 		return orderlist;
 	}
