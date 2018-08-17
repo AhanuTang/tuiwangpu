@@ -3,24 +3,27 @@ package com.test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;  
-import org.apache.commons.httpclient.Header;  
-import org.apache.commons.httpclient.HttpClient;  
-import org.apache.commons.httpclient.HttpException;  
-import org.apache.commons.httpclient.HttpMethod;  
-import org.apache.commons.httpclient.HttpStatus;  
-import org.apache.commons.httpclient.NameValuePair;  
-import org.apache.commons.httpclient.methods.GetMethod;  
-import org.apache.commons.httpclient.methods.PostMethod;  
-import org.apache.commons.httpclient.params.HttpMethodParams;  
-import org.apache.http.client.methods.HttpPost;  
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
 public class HttpRequest {
-	
+
 	public static String sendGet(String url, String cookie) {
 		String result = "";
 		BufferedReader in = null;
@@ -62,62 +65,48 @@ public class HttpRequest {
 		return result;
 	}
 
-	  /** 
-     * 执行一个HTTP POST请求，返回请求响应的HTML 
-     *  
-     * @param url  请求的URL地址 
-     * @param params  请求的查询参数,可以为null 
-     * @param charset 字符集 
-     * @param pretty 是否美化 
-     * @return 返回请求响应的HTML 
-     */  
-    public static String sendPost(String url, Map<String, Object> _params) { 
-    	String charset =  "UTF-8";
-    	 boolean pretty =  true;
-        StringBuffer response = new StringBuffer();  
-        HttpClient client = new HttpClient();  
-        PostMethod method = new PostMethod(url);  
-          
-        // 设置Http Post数据  
-        if (_params != null) {  
-            for (Map.Entry<String, Object> entry : _params.entrySet()) {  
-                method.setParameter(entry.getKey(), String.valueOf(entry.getValue()));  
-            }  
-        }  
-          
-        // 设置Http Post数据  方法二  
-//        if(_params != null) {  
-//            NameValuePair[] pairs = new NameValuePair[_params.size()];//纯参数了，键值对  
-//            int i = 0;  
-//            for (Map.Entry<String, Object> entry : _params.entrySet()) {  
-//                pairs[i] = new NameValuePair(entry.getKey(), String.valueOf(entry.getValue()));  
-//                i++;  
-//            }  
-//            method.addParameters(pairs);  
-//        }  
-          
-        try {  
-            client.executeMethod(method);  
-            if (method.getStatusCode() == HttpStatus.SC_OK) {  
-                // 读取为 InputStream，在网页内容数据量大时候推荐使用  
-                BufferedReader reader = new BufferedReader(new InputStreamReader(method.getResponseBodyAsStream(),  
-                        charset));  
-                String line;  
-                while ((line = reader.readLine()) != null) {  
-                    if (pretty)  
-                        response.append(line).append(System.getProperty("line.separator"));  
-                    else  
-                        response.append(line);  
-                }  
-                reader.close();  
-            }  
-        } catch (IOException e) {  
-            System.out.println("执行HTTP Post请求" + url + "时，发生异常！");  
-            e.printStackTrace();  
-        } finally {  
-            method.releaseConnection();  
-        }  
-        System.out.println("--------------------" + response.toString());  
-        return response.toString();  
-    }  
+	
+	
+	   public static String doPost(String url, Map<String, String> param, String cookie) {  
+	        // 创建Httpclient对象  
+	        CloseableHttpClient httpClient = HttpClients.createDefault();  
+	        CloseableHttpResponse response = null;  
+	        String resultString = "";  
+	        try {  
+	            // 创建Http Post请求  
+	            HttpPost httpPost = new HttpPost(url);  
+	            // 创建参数列表  
+	            if (param != null) {  
+	                List<NameValuePair> paramList = new ArrayList<NameValuePair>();  
+	                for (String key : param.keySet()) {  
+	                    paramList.add(new BasicNameValuePair(key, param.get(key)));  
+	                }  
+	                // 模拟表单  
+	                UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramList);  
+	                httpPost.setEntity(entity);  
+	                httpPost.setHeader("accept", "application/json, text/javascript, */*; q=0.01");
+	                httpPost.setHeader("X-Requested-With", "XMLHttpRequest");
+	                httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3510.2 Safari/537.36");
+	                httpPost.setHeader("Referer", "http://www.tuiwangpu.com/ucenterTry/hall/tbtask/");
+	                httpPost.setHeader("Accept-Encoding", "gzip, deflate, br");
+	                httpPost.setHeader("Accept-Language", "zh-CN,zh;q=0.9");
+	                httpPost.setHeader("Cookie", cookie);
+	            }  
+	            
+	            // 执行http请求  
+	            response = httpClient.execute(httpPost);  
+	            resultString = EntityUtils.toString(response.getEntity(), "utf-8");  
+	        } catch (Exception e) {  
+	            e.printStackTrace();  
+	        } finally {  
+	            try {  
+	                response.close();  
+	            } catch (IOException e) {  
+	                // TODO Auto-generated catch block  
+	                e.printStackTrace();  
+	            }  
+	        }  
+	  
+	        return resultString;  
+	    }  
 }
